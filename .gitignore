@@ -6,6 +6,13 @@ out
 dist
 *.tgz
 
+# app data (ciudades guardadas y ajustes)
+database/
+
+# compiled binary
+weather
+weather.exe
+
 # code coverage
 coverage
 *.lcov
