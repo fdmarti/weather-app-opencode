@@ -1,6 +1,6 @@
 import { celsiusToFahrenheit, geocode, getTemperature } from "./api.ts";
 import { isCitySaved, loadDatabase, saveDatabase, type Database, type SavedCity } from "./storage.ts";
-import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber } from "./ui.ts";
+import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber, type MenuItem } from "./ui.ts";
 
 function formatTemperature(tempCelsius: number, db: Database): string {
   if (db.unit === "F") {
@@ -132,11 +132,26 @@ function optionToggleUnit(db: Database): void {
   console.log(`  Unidad de temperatura cambiada a °${db.unit}.`);
 }
 
+async function optionExit(): Promise<void> {}
+
+function buildMenu(): MenuItem[] {
+  return [
+    { key: "1", label: () => "Clima de ciudad default", run: optionDefaultWeather },
+    { key: "2", label: (db) => `Clima de todas las ciudades (${db.cities.length})`, run: optionAllWeather },
+    { key: "3", label: () => "Buscar y agregar ciudad", run: optionSearchAndAdd },
+    { key: "4", label: () => "Eliminar ciudad", run: optionDeleteCity },
+    { key: "5", label: () => "Establecer ciudad default", run: optionSetDefault },
+    { key: "8", label: (db) => `Ajustes (°${db.unit})`, run: async (db) => optionToggleUnit(db) },
+    { key: "9", label: () => "Salir", run: async () => optionExit(), exit: true },
+  ];
+}
+
 async function main(): Promise<void> {
   const db = loadDatabase();
+  const menu = buildMenu();
 
   while (true) {
-    printMenu(db);
+    printMenu(menu, db);
     const option = await prompt("  Selecciona una opción: ");
 
     if (option === INPUT_ENDED) {
@@ -145,34 +160,23 @@ async function main(): Promise<void> {
       return;
     }
 
-    switch (option) {
-      case "1":
-        await optionDefaultWeather(db);
-        break;
-      case "2":
-        await optionAllWeather(db);
-        break;
-      case "3":
-        await optionSearchAndAdd(db);
-        break;
-      case "4":
-        await optionDeleteCity(db);
-        break;
-      case "5":
-        await optionSetDefault(db);
-        break;
-      case "6":
-        optionToggleUnit(db);
-        break;
-      case "7":
-        console.log("");
-        printBanner();
-        console.log("         ¡Hasta luego!");
-        console.log(LINE);
-        closeInput();
-        return;
-      default:
-        console.log("  Opción no válida. Elige un número del 1 al 7.");
+    const item = menu.find((entry) => entry.key === option);
+    if (!item) {
+      const lastKey = menu[menu.length - 1]?.key ?? "9";
+      console.log(`  Opción no válida. Elige un número del 1 al ${lastKey}.`);
+      await pause();
+      continue;
+    }
+
+    await item.run(db);
+
+    if (item.exit) {
+      console.log("");
+      printBanner();
+      console.log("         ¡Hasta luego!");
+      console.log(LINE);
+      closeInput();
+      return;
     }
 
     await pause();

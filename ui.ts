@@ -60,16 +60,19 @@ export function printBanner(): void {
   console.log(LINE);
 }
 
-export function printMenu(db: Database): void {
+export interface MenuItem {
+  key: string;
+  label: (db: Database) => string;
+  run: (db: Database) => Promise<void>;
+  exit?: boolean;
+}
+
+export function printMenu(items: MenuItem[], db: Database): void {
   console.log("");
   printBanner();
-  console.log("  1. Clima de ciudad default");
-  console.log(`  2. Clima de todas las ciudades (${db.cities.length})`);
-  console.log("  3. Buscar y agregar ciudad");
-  console.log("  4. Eliminar ciudad");
-  console.log("  5. Establecer ciudad default");
-  console.log(`  6. Ajustes (°${db.unit})`);
-  console.log("  7. Salir");
+  for (const item of items) {
+    console.log(`  ${item.key}. ${item.label(db)}`);
+  }
   console.log(LINE);
 }
 

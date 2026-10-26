@@ -6,6 +6,9 @@ out
 dist
 *.tgz
 
+# superpowers plan workspace (scratch)
+.superpowers/
+
 # app data (ciudades guardadas y ajustes)
 database/
 
