@@ -1,10 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import type { Interface } from "node:readline/promises";
-import { bold, cyan, green, red } from "./colors.ts";
-import type { Database } from "./storage.ts";
-
-const SEPARATOR = "═".repeat(40);
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+import { printError } from "./output.ts";
 
 let reader: Interface | null = null;
 let inputClosed = false;
@@ -48,27 +44,6 @@ export function closeReader(): void {
   reader = null;
 }
 
-export function printBanner(): void {
-  console.log(cyan(SEPARATOR));
-  console.log(cyan(bold("         WEATHER CLI")));
-  console.log(cyan(SEPARATOR));
-}
-
-export interface MenuItem {
-  key: string;
-  label: (db: Database) => string;
-  run: () => Promise<void>;
-  exit?: boolean;
-}
-
-export function printMenu(items: MenuItem[], db: Database): void {
-  console.log(cyan(SEPARATOR));
-  for (const item of items) {
-    console.log(`  ${cyan(`${item.key}.`)} ${item.label(db)}`);
-  }
-  console.log(cyan(SEPARATOR));
-}
-
 /** Pregunta por una línea de texto y la devuelve sin espacios sobrantes. */
 export async function prompt(message: string): Promise<string> {
   const rl = getReader();
@@ -105,38 +80,5 @@ export async function promptIndex(message: string, total: number): Promise<numbe
       return index;
     }
     printError(`Opción no válida. Ingresa un número entre 1 y ${total}.`);
-  }
-}
-
-export function printNumbered<T>(items: T[], describe: (item: T) => string): void {
-  items.forEach((item, index) => {
-    console.log(`  ${cyan(`${index + 1}.`)} ${describe(item)}`);
-  });
-}
-
-export function printError(message: string): void {
-  console.log(red(`  ✖ ${message}`));
-}
-
-export function printSuccess(message: string): void {
-  console.log(green(`  ✔ ${message}`));
-}
-
-/** Muestra un spinner mientras corre la tarea asíncrona y limpia la línea al terminar. */
-export async function withLoading<T>(message: string, task: () => Promise<T>): Promise<T> {
-  const render = (frame: string): string => `\r\x1b[K  ${cyan(frame)} ${message}`;
-  let step = 0;
-  process.stdout.write(render(SPINNER_FRAMES[0] ?? "⠋"));
-
-  const timer = setInterval(() => {
-    step += 1;
-    process.stdout.write(render(SPINNER_FRAMES[step % SPINNER_FRAMES.length] ?? "⠋"));
-  }, 80);
-
-  try {
-    return await task();
-  } finally {
-    clearInterval(timer);
-    process.stdout.write("\r\x1b[K");
   }
 }

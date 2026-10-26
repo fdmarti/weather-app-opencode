@@ -18,11 +18,13 @@ An interactive console weather app (Spanish-language UI) whose behavior is spec'
 
 ## Structure
 
-- `src/index.ts` — entrypoint: menu option table (`MenuItem` in `src/ui.ts`: `{ key, label(db), run, exit }`) and the option handlers. Adding a menu option = one table entry + one handler function.
-- `src/api.ts` — OpenMeteo clients (`geocode`, `getTemperature`), discriminated-union results `{ ok: true, ... } | { ok: false, error }`. Never throws; all failure paths return Spanish error strings.
-- `src/storage.ts` — `loadDatabase(dir?)` / `saveDatabase(db, dir?)`; `dir` defaults to `database` (relative to cwd).
-- `src/ui.ts` — readline prompts (persistent buffered line reader), `printMenu`/`printBanner`, `withLoading` spinner.
-- `src/colors.ts` — raw ANSI constants, no dependencies.
+- `src/index.ts` — entrypoint: menu option table (`MenuItem` in `src/types/MenuOption.ts`: `{ key, label(db), run, exit }`). Adding a menu option = one table entry + one action function.
+- `src/actions/` — one file per menu option (`getWeather.ts`, `listCities.ts`, `getForecast.ts`, `addCity.ts`, `removeCity.ts`, `setDefaultCity.ts`, `toggleUnit.ts`, `exit.ts`). Each exports a function that receives the `Database` as its first argument.
+- `src/api/` — OpenMeteo clients, one action per file (`geocode.action.ts`, `get-temperature.action.ts`, `get-forecast.action.ts`), discriminated-union results `{ ok: true, ... } | { ok: false, error }`. Never throws; all failure paths return Spanish error strings.
+- `src/presentation/` — `menu.ts` (banner/menu), `output.ts` (`printError`/`printSuccess`/`printNumbered`/`withLoading` spinner), `input.ts` (readline prompts, persistent buffered line reader).
+- `src/storage/citiesStorage.ts` — `loadDatabase(dir?)` / `saveDatabase(db, dir?)`; `dir` defaults to `database` (relative to cwd).
+- `src/types/` — global types: `City.ts`, `Database.ts`, `Weather.ts`, `Geocode.ts`, `MenuOption.ts`.
+- `src/utils/` — `colors.ts` (raw ANSI constants), `format.ts` (`formatTemperature`/`cityLabel`/`formatDate`), `city.ts` (`sameCity`), `constants.ts` (URLs, timeouts, separators).
 
 ## Conventions
 

@@ -7,6 +7,7 @@ El objetivo de esta aplicación es que creemos una aplicación de consola que pi
 - Ingresar el nombre de una ciudad.
 - Guardar la ciudad por defecto.
 - Registrar varias otras ciudades para buscar el clima en esas otras ciudades.
+- Ver el pronóstico de los próximos 7 días de una ciudad guardada.
 
 ## Stack
 
@@ -39,9 +40,10 @@ Esta es la apariencia que deseamos crear
 ════════════════════════════════════════
   1. Clima de ciudad default
   2. Clima de todas las ciudades (1)
-  3. Buscar y agregar ciudad
-  4. Eliminar ciudad
-  5. Establecer ciudad default
+  3. Pronóstico de 7 días
+  4. Buscar y agregar ciudad
+  5. Eliminar ciudad
+  6. Establecer ciudad default
   8. Ajustes (°C)
   9. Salir
 ════════════════════════════════════════
