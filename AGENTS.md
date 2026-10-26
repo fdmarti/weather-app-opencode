@@ -2,10 +2,9 @@
 
 ## Commands
 
-- Package manager is **Bun** (not npm/pnpm). Use `bun install`, `bun run index.ts`.
+- Package manager is **Bun** (not npm/pnpm). Use `bun install`, `bun run src/index.ts`.
 - Typecheck: `bun check` (Bun 1.4 native typecheck).
-- Tests: `bun test` (Bun test runner). Suite in `test/`: `storage.test.ts`, `api.test.ts` (fetch mocked, no network).
-- Build standalone binary: `bun run build` (= `bun build ./index.ts --compile --outfile weather`).
+- Build standalone binary: `bun run build` (= `bun build ./src/index.ts --compile --outfile weather`).
 
 ## What this app is
 
@@ -19,12 +18,11 @@ An interactive console weather app (Spanish-language UI) whose behavior is spec'
 
 ## Structure
 
-- `index.ts` — entrypoint: menu option table (`MenuItem` in `ui.ts`: `{ key, label(db), run, exit }`) and the option handlers. Adding a menu option = one table entry + one handler function.
-- `api.ts` — OpenMeteo clients (`geocode`, `getTemperature`), discriminated-union results `{ ok: true, ... } | { ok: false, error }`. Never throws; all failure paths return Spanish error strings.
-- `storage.ts` — `loadDatabase(dir?)` / `saveDatabase(db, dir?)`; `dir` defaults to `database` (tests pass a temp dir).
-- `ui.ts` — readline prompts (buffered line reader), `printMenu`/`printBanner`, `withLoading` spinner.
-- `colors.ts` — raw ANSI constants, no dependencies.
-- `test/` — Bun tests; `api.test.ts` mocks `globalThis.fetch`.
+- `src/index.ts` — entrypoint: menu option table (`MenuItem` in `src/ui.ts`: `{ key, label(db), run, exit }`) and the option handlers. Adding a menu option = one table entry + one handler function.
+- `src/api.ts` — OpenMeteo clients (`geocode`, `getTemperature`), discriminated-union results `{ ok: true, ... } | { ok: false, error }`. Never throws; all failure paths return Spanish error strings.
+- `src/storage.ts` — `loadDatabase(dir?)` / `saveDatabase(db, dir?)`; `dir` defaults to `database` (relative to cwd).
+- `src/ui.ts` — readline prompts (persistent buffered line reader), `printMenu`/`printBanner`, `withLoading` spinner.
+- `src/colors.ts` — raw ANSI constants, no dependencies.
 
 ## Conventions
 

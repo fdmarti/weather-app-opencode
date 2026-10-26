@@ -46,5 +46,4 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # Build
 weather.exe
 
-#IA
-.superpowers
+.opencode
