@@ -15,8 +15,7 @@ export interface Database {
   cities: SavedCity[];
 }
 
-const DB_DIR = "database";
-const DB_PATH = `${DB_DIR}/cities.json`;
+const DEFAULT_DB_DIR = "database";
 
 const EMPTY_DB: Database = { defaultCity: null, unit: "C", cities: [] };
 
@@ -30,10 +29,11 @@ function isSavedCity(value: unknown): value is SavedCity {
   );
 }
 
-export function loadDatabase(): Database {
+export function loadDatabase(dir: string = DEFAULT_DB_DIR): Database {
+  const dbPath = `${dir}/cities.json`;
   try {
-    if (!existsSync(DB_PATH)) return { ...EMPTY_DB, cities: [] };
-    const raw = readFileSync(DB_PATH, "utf-8");
+    if (!existsSync(dbPath)) return { ...EMPTY_DB, cities: [] };
+    const raw = readFileSync(dbPath, "utf-8");
     const parsed = JSON.parse(raw) as Partial<Database>;
     return {
       defaultCity: typeof parsed.defaultCity === "string" ? parsed.defaultCity : null,
@@ -41,14 +41,14 @@ export function loadDatabase(): Database {
       cities: Array.isArray(parsed.cities) ? parsed.cities.filter(isSavedCity) : [],
     };
   } catch {
-    console.log("Aviso: no se pudo leer database/cities.json, se empieza con una configuración vacía.");
+    console.log(`Aviso: no se pudo leer ${dbPath}, se empieza con una configuración vacía.`);
     return { ...EMPTY_DB, cities: [] };
   }
 }
 
-export function saveDatabase(db: Database): void {
-  mkdirSync(DB_DIR, { recursive: true });
-  writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
+export function saveDatabase(db: Database, dir: string = DEFAULT_DB_DIR): void {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(`${dir}/cities.json`, JSON.stringify(db, null, 2), "utf-8");
 }
 
 export function isCitySaved(db: Database, name: string): boolean {
