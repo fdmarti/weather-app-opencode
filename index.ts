@@ -1,4 +1,4 @@
-import { celsiusToFahrenheit, geocode, getTemperature } from "./api.ts";
+import { celsiusToFahrenheit, geocode, getTemperature, type GeoResult } from "./api.ts";
 import { isCitySaved, loadDatabase, saveDatabase, type Database, type SavedCity } from "./storage.ts";
 import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber, type MenuItem } from "./ui.ts";
 
@@ -28,7 +28,7 @@ async function findDefaultCity(db: Database): Promise<SavedCity | null | undefin
   const saved = db.cities.find((city) => city.name.toLowerCase() === db.defaultCity!.toLowerCase());
   if (saved) return saved;
   const geo = await geocode(db.defaultCity);
-  return geo.ok ? geo.result : null;
+  return geo.ok ? geo.results[0] ?? null : null;
 }
 
 async function optionDefaultWeather(db: Database): Promise<void> {
@@ -50,6 +50,22 @@ async function optionAllWeather(db: Database): Promise<void> {
   }
 }
 
+async function chooseGeoResult(results: GeoResult[]): Promise<GeoResult | null> {
+  if (results.length === 1) return results[0] ?? null;
+  console.log(`  Se encontraron ${results.length} coincidencias:`);
+  results.forEach((result, index) => {
+    const label = result.country ? `${result.name}, ${result.country}` : result.name;
+    console.log(`    ${index + 1}. ${label}`);
+  });
+  console.log(`    0. Cancelar`);
+  const selection = await promptNumber("  Número de la ciudad a agregar: ");
+  if (selection < 1 || selection > results.length) {
+    console.log("  Búsqueda cancelada.");
+    return null;
+  }
+  return results[selection - 1] ?? null;
+}
+
 async function optionSearchAndAdd(db: Database): Promise<void> {
   const name = await prompt("  Nombre de la ciudad: ");
   if (!name) {
@@ -66,11 +82,13 @@ async function optionSearchAndAdd(db: Database): Promise<void> {
     console.log(`  ${geo.error}`);
     return;
   }
+  const chosen = await chooseGeoResult(geo.results);
+  if (!chosen) return;
   const found: SavedCity = {
-    name: geo.result.name,
-    country: geo.result.country,
-    latitude: geo.result.latitude,
-    longitude: geo.result.longitude,
+    name: chosen.name,
+    country: chosen.country,
+    latitude: chosen.latitude,
+    longitude: chosen.longitude,
   };
   console.log(`  Encontrado: ${cityLabel(found)} (${found.latitude.toFixed(2)}, ${found.longitude.toFixed(2)})`);
   db.cities.push(found);

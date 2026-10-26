@@ -7,22 +7,24 @@ export interface GeoResult {
 }
 
 export type GeocodeResult =
-  | { ok: true; result: GeoResult }
+  | { ok: true; results: GeoResult[] }
   | { ok: false; error: string };
 
 export async function geocode(cityName: string): Promise<GeocodeResult> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=es&format=json`;
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=es&format=json`;
   try {
     const res = await fetch(url);
     if (!res.ok) {
       return { ok: false, error: `Error en la búsqueda (${res.status}).` };
     }
     const data = (await res.json()) as { results?: GeoResult[] };
-    const first = data.results?.[0];
-    if (!first || typeof first.latitude !== "number" || typeof first.longitude !== "number") {
+    const results = (Array.isArray(data.results) ? data.results : []).filter(
+      (candidate) => typeof candidate.latitude === "number" && typeof candidate.longitude === "number",
+    );
+    if (results.length === 0) {
       return { ok: false, error: `No se encontró la ciudad "${cityName}".` };
     }
-    return { ok: true, result: first };
+    return { ok: true, results };
   } catch {
     return { ok: false, error: "No se pudo conectar con el servicio de geocoding. Revisa tu conexión." };
   }
