@@ -1,8 +1,9 @@
 import { createInterface } from "node:readline";
 import { stdin, stdout } from "node:process";
+import { BOLD, CYAN, RESET } from "./colors.ts";
 import type { Database } from "./storage.ts";
 
-export const LINE = "═".repeat(38);
+export const LINE = `${CYAN}${"═".repeat(38)}${RESET}`;
 
 // Sentinel devuelto por prompt() cuando la entrada terminó (EOF) y ya no hay
 // líneas en el buffer; se distingue de un Enter en blanco del usuario.
@@ -56,7 +57,7 @@ export function prompt(message: string): Promise<string> {
 
 export function printBanner(): void {
   console.log(LINE);
-  console.log("         WEATHER CLI");
+  console.log(`${CYAN}${BOLD}         WEATHER CLI${RESET}`);
   console.log(LINE);
 }
 
@@ -71,7 +72,7 @@ export function printMenu(items: MenuItem[], db: Database): void {
   console.log("");
   printBanner();
   for (const item of items) {
-    console.log(`  ${item.key}. ${item.label(db)}`);
+    console.log(`  ${CYAN}${item.key}. ${item.label(db)}${RESET}`);
   }
   console.log(LINE);
 }

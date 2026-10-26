@@ -1,12 +1,13 @@
 import { celsiusToFahrenheit, geocode, getTemperature, type GeoResult } from "./api.ts";
+import { GREEN, RED, RESET, YELLOW } from "./colors.ts";
 import { isCitySaved, loadDatabase, saveDatabase, type Database, type SavedCity } from "./storage.ts";
 import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber, withLoading, type MenuItem } from "./ui.ts";
 
 function formatTemperature(tempCelsius: number, db: Database): string {
   if (db.unit === "F") {
-    return `${celsiusToFahrenheit(tempCelsius).toFixed(1)} °F`;
+    return `${YELLOW}${celsiusToFahrenheit(tempCelsius).toFixed(1)} °F${RESET}`;
   }
-  return `${tempCelsius.toFixed(1)} °C`;
+  return `${YELLOW}${tempCelsius.toFixed(1)} °C${RESET}`;
 }
 
 function cityLabel(city: SavedCity): string {
@@ -18,7 +19,7 @@ async function showCityWeather(city: SavedCity, db: Database): Promise<void> {
     getTemperature(city.latitude, city.longitude),
   );
   if (!forecast.ok) {
-    console.log(`  ${city.name}: ${forecast.error}`);
+    console.log(`  ${city.name}: ${RED}${forecast.error}${RESET}`);
     return;
   }
   console.log(`  ${cityLabel(city)}: ${formatTemperature(forecast.tempCelsius, db)}`);
@@ -37,7 +38,7 @@ async function findDefaultCity(db: Database): Promise<SavedCity | null | undefin
 async function optionDefaultWeather(db: Database): Promise<void> {
   const city = await findDefaultCity(db);
   if (!city) {
-    console.log(`  No hay ciudad default configurada. Usa la opción 3 para agregar una${db.defaultCity ? " (la default guardada ya no es válida)." : "."}`);
+    console.log(`  ${RED}No hay ciudad default configurada. Usa la opción 3 para agregar una${db.defaultCity ? " (la default guardada ya no es válida)." : "."}${RESET}`);
     return;
   }
   await showCityWeather(city, db);
@@ -45,7 +46,7 @@ async function optionDefaultWeather(db: Database): Promise<void> {
 
 async function optionAllWeather(db: Database): Promise<void> {
   if (db.cities.length === 0) {
-    console.log("  No hay ciudades guardadas. Usa la opción 3 para agregar una.");
+    console.log(`  ${RED}No hay ciudades guardadas. Usa la opción 3 para agregar una.${RESET}`);
     return;
   }
   const forecasts = await withLoading(`Consultando clima de ${db.cities.length} ciudades...`, () =>
@@ -85,12 +86,12 @@ async function optionSearchAndAdd(db: Database): Promise<void> {
     return;
   }
   if (isCitySaved(db, name)) {
-    console.log(`  "${name}" ya está en tus ciudades guardadas.`);
+    console.log(`  ${RED}"${name}" ya está en tus ciudades guardadas.${RESET}`);
     return;
   }
   const geo = await withLoading(`Buscando "${name}"...`, () => geocode(name));
   if (!geo.ok) {
-    console.log(`  ${geo.error}`);
+    console.log(`  ${RED}${geo.error}${RESET}`);
     return;
   }
   const chosen = await chooseGeoResult(geo.results);
@@ -101,24 +102,24 @@ async function optionSearchAndAdd(db: Database): Promise<void> {
     latitude: chosen.latitude,
     longitude: chosen.longitude,
   };
-  console.log(`  Encontrado: ${cityLabel(found)} (${found.latitude.toFixed(2)}, ${found.longitude.toFixed(2)})`);
+  console.log(`  ${GREEN}Encontrado: ${cityLabel(found)} (${found.latitude.toFixed(2)}, ${found.longitude.toFixed(2)})${RESET}`);
   db.cities.push(found);
   if (!db.defaultCity) {
     db.defaultCity = found.name;
-    console.log(`  Se estableció "${found.name}" como ciudad default.`);
+    console.log(`  ${GREEN}Se estableció "${found.name}" como ciudad default.${RESET}`);
   }
   const setDefault = (await prompt("  ¿Establecer como ciudad default? (s/n): ")).toLowerCase();
   if (setDefault === "s" || setDefault === "si" || setDefault === "sí") {
     db.defaultCity = found.name;
-    console.log(`  "${found.name}" ahora es la ciudad default.`);
+    console.log(`  ${GREEN}"${found.name}" ahora es la ciudad default.${RESET}`);
   }
   saveDatabase(db);
-  console.log(`  Ciudad agregada. Total: ${db.cities.length}.`);
+  console.log(`  ${GREEN}Ciudad agregada. Total: ${db.cities.length}.${RESET}`);
 }
 
 async function pickCity(db: Database, action: string): Promise<SavedCity | null> {
   if (db.cities.length === 0) {
-    console.log("  No hay ciudades guardadas. Usa la opción 3 para agregar una.");
+    console.log(`  ${RED}No hay ciudades guardadas. Usa la opción 3 para agregar una.${RESET}`);
     return null;
   }
   console.log("  Ciudades guardadas:");
@@ -144,7 +145,7 @@ async function optionDeleteCity(db: Database): Promise<void> {
     console.log(`  "${city.name}" era la ciudad default; ahora no hay default.`);
   }
   saveDatabase(db);
-  console.log(`  Ciudad eliminada. Total: ${db.cities.length}.`);
+  console.log(`  ${GREEN}Ciudad eliminada. Total: ${db.cities.length}.${RESET}`);
 }
 
 async function optionSetDefault(db: Database): Promise<void> {
@@ -152,13 +153,13 @@ async function optionSetDefault(db: Database): Promise<void> {
   if (!city) return;
   db.defaultCity = city.name;
   saveDatabase(db);
-  console.log(`  "${city.name}" ahora es la ciudad default.`);
+  console.log(`  ${GREEN}"${city.name}" ahora es la ciudad default.${RESET}`);
 }
 
 function optionToggleUnit(db: Database): void {
   db.unit = db.unit === "C" ? "F" : "C";
   saveDatabase(db);
-  console.log(`  Unidad de temperatura cambiada a °${db.unit}.`);
+  console.log(`  ${GREEN}Unidad de temperatura cambiada a °${db.unit}.${RESET}`);
 }
 
 async function optionExit(): Promise<void> {}
@@ -192,7 +193,7 @@ async function main(): Promise<void> {
     const item = menu.find((entry) => entry.key === option);
     if (!item) {
       const lastKey = menu[menu.length - 1]?.key ?? "9";
-      console.log(`  Opción no válida. Elige un número del 1 al ${lastKey}.`);
+      console.log(`  ${RED}Opción no válida. Elige un número del 1 al ${lastKey}.${RESET}`);
       await pause();
       continue;
     }
