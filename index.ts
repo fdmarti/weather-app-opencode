@@ -192,8 +192,8 @@ async function main(): Promise<void> {
 
     const item = menu.find((entry) => entry.key === option);
     if (!item) {
-      const lastKey = menu[menu.length - 1]?.key ?? "9";
-      console.log(`  ${RED}Opción no válida. Elige un número del 1 al ${lastKey}.${RESET}`);
+      const validKeys = menu.map((entry) => entry.key).join(", ");
+      console.log(`  ${RED}Opción no válida. Elige una de: ${validKeys}.${RESET}`);
       await pause();
       continue;
     }
