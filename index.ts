@@ -1,6 +1,6 @@
 import { celsiusToFahrenheit, geocode, getTemperature, type GeoResult } from "./api.ts";
 import { isCitySaved, loadDatabase, saveDatabase, type Database, type SavedCity } from "./storage.ts";
-import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber, type MenuItem } from "./ui.ts";
+import { INPUT_ENDED, LINE, closeInput, pause, printBanner, printMenu, prompt, promptNumber, withLoading, type MenuItem } from "./ui.ts";
 
 function formatTemperature(tempCelsius: number, db: Database): string {
   if (db.unit === "F") {
@@ -14,7 +14,9 @@ function cityLabel(city: SavedCity): string {
 }
 
 async function showCityWeather(city: SavedCity, db: Database): Promise<void> {
-  const forecast = await getTemperature(city.latitude, city.longitude);
+  const forecast = await withLoading(`Consultando clima de ${city.name}...`, () =>
+    getTemperature(city.latitude, city.longitude),
+  );
   if (!forecast.ok) {
     console.log(`  ${city.name}: ${forecast.error}`);
     return;
@@ -24,10 +26,11 @@ async function showCityWeather(city: SavedCity, db: Database): Promise<void> {
 
 async function findDefaultCity(db: Database): Promise<SavedCity | null | undefined> {
   // null → no hay default; undefined → el default existe pero hay que geocodificarlo
-  if (!db.defaultCity) return null;
-  const saved = db.cities.find((city) => city.name.toLowerCase() === db.defaultCity!.toLowerCase());
+  const defaultCity = db.defaultCity;
+  if (!defaultCity) return null;
+  const saved = db.cities.find((city) => city.name.toLowerCase() === defaultCity.toLowerCase());
   if (saved) return saved;
-  const geo = await geocode(db.defaultCity);
+  const geo = await withLoading(`Buscando "${defaultCity}"...`, () => geocode(defaultCity));
   return geo.ok ? geo.results[0] ?? null : null;
 }
 
@@ -45,9 +48,18 @@ async function optionAllWeather(db: Database): Promise<void> {
     console.log("  No hay ciudades guardadas. Usa la opción 3 para agregar una.");
     return;
   }
-  for (const city of db.cities) {
-    await showCityWeather(city, db);
-  }
+  const forecasts = await withLoading(`Consultando clima de ${db.cities.length} ciudades...`, () =>
+    Promise.all(db.cities.map((city) => getTemperature(city.latitude, city.longitude))),
+  );
+  db.cities.forEach((city, index) => {
+    const forecast = forecasts[index];
+    if (!forecast) return;
+    if (!forecast.ok) {
+      console.log(`  ${city.name}: ${forecast.error}`);
+      return;
+    }
+    console.log(`  ${cityLabel(city)}: ${formatTemperature(forecast.tempCelsius, db)}`);
+  });
 }
 
 async function chooseGeoResult(results: GeoResult[]): Promise<GeoResult | null> {
@@ -76,8 +88,7 @@ async function optionSearchAndAdd(db: Database): Promise<void> {
     console.log(`  "${name}" ya está en tus ciudades guardadas.`);
     return;
   }
-  console.log(`  Buscando "${name}"...`);
-  const geo = await geocode(name);
+  const geo = await withLoading(`Buscando "${name}"...`, () => geocode(name));
   if (!geo.ok) {
     console.log(`  ${geo.error}`);
     return;

@@ -82,6 +82,25 @@ export async function promptNumber(message: string): Promise<number> {
   return Number.isNaN(parsed) ? -1 : parsed;
 }
 
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
+// Muestra un spinner mientras fn() corre. Limpia la línea al terminar y
+// propaga cualquier error de fn (el spinner nunca oculta fallos).
+export async function withLoading<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  let frame = 0;
+  stdout.write(`  ${SPINNER_FRAMES[0]} ${label}`);
+  const interval = setInterval(() => {
+    frame = (frame + 1) % SPINNER_FRAMES.length;
+    stdout.write(`\r  ${SPINNER_FRAMES[frame]} ${label}`);
+  }, 80);
+  try {
+    return await fn();
+  } finally {
+    clearInterval(interval);
+    stdout.write("\r\x1b[2K\r");
+  }
+}
+
 export async function pause(): Promise<void> {
   console.log("");
   await prompt("  Presiona Enter para volver al menú...");
