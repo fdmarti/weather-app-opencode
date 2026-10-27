@@ -13,9 +13,8 @@ import { loadDatabase } from "./storage/citiesStorage.ts";
 import type { Database } from "./types/Database.ts";
 import type { MenuItem } from "./types/MenuOption.ts";
 
-const db: Database = loadDatabase();
-
-const menuItems: MenuItem[] = [
+export function createMenuItems(db: Database): MenuItem[] {
+  return [
   { key: "1", label: () => "Clima de ciudad default", run: () => showDefaultCityWeather(db) },
   { key: "2", label: (database) => `Clima de todas las ciudades (${database.cities.length})`, run: () => showAllCitiesWeather(db) },
   { key: "3", label: () => "Pronóstico de 7 días", run: () => forecastSavedCity(db) },
@@ -24,9 +23,12 @@ const menuItems: MenuItem[] = [
   { key: "6", label: () => "Establecer ciudad default", run: () => setDefaultCity(db) },
   { key: "8", label: (database) => `Ajustes (°${database.unit})`, run: () => toggleUnit(db) },
   { key: "9", label: () => "Salir", run: exitApp, exit: true },
-];
+  ];
+}
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
+  const db = loadDatabase();
+  const menuItems = createMenuItems(db);
   printBanner();
   let running = true;
   while (running) {
@@ -44,13 +46,15 @@ async function main(): Promise<void> {
   }
 }
 
-process.on("SIGINT", () => {
-  closeReader();
-  process.exit(0);
-});
+if (import.meta.main) {
+  process.on("SIGINT", () => {
+    closeReader();
+    process.exit(0);
+  });
 
-main().catch((error: unknown) => {
-  closeReader();
-  console.error(error);
-  process.exit(1);
-});
+  main().catch((error: unknown) => {
+    closeReader();
+    console.error(error);
+    process.exit(1);
+  });
+}
